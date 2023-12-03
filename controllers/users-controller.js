@@ -33,6 +33,60 @@ const signup = async (req, res) => {
   });
 };
 
+const login = async (req, res) => {
+  const { email, password } = req.body;
+
+  const user = await UserModel.findOne({ email });
+
+  if (!user) {
+    res.status(401).json({
+      message: "Email or password is wrong",
+    });
+    return;
+  }
+
+  const comparePassword = await user.comparePassword(password);
+
+  if (!comparePassword) {
+    res.status(401).json({ message: "Email or password is wrong" });
+    return;
+  }
+
+  const payload = {
+    id: user._id,
+  };
+
+  const token = jwt.sign(payload, SECRET_KEY);
+
+  await UserModel.findByIdAndUpdate(user._id, { token });
+
+  res.json({
+    user: { name: user.name, email, avatarURL: user.avatarURL },
+    token,
+  });
+};
+
+const logout = async (req, res) => {
+  const { _id } = req.user;
+
+  await UserModel.findByIdAndUpdate(_id, { token: "" });
+
+  res.sendStatus(204);
+};
+
+const current = (req, res) => {
+  const { name, email, avatarURL } = req.user;
+
+  res.json({
+    name,
+    email,
+    avatarURL,
+  });
+};
+
 module.exports = {
   signup,
+  login,
+  logout,
+  current,
 };
