@@ -1,8 +1,12 @@
 const UserModel = require("../db/models/user-model");
 const gravatar = require("gravatar");
 const jwt = require("jsonwebtoken");
+const path = require("path");
+const fs = require("fs/promises");
+const Jimp = require("jimp");
 
 const { SECRET_KEY } = process.env;
+const avatarDir = path.resolve("public", "avatars");
 
 const signup = async (req, res) => {
   const { email, name } = req.body;
@@ -84,9 +88,35 @@ const current = (req, res) => {
   });
 };
 
+const updateAvatar = async (req, res) => {
+  const { _id } = req.user;
+  if (!req.file) {
+    res.status(400).json({
+      message: "File is not defined",
+    });
+  }
+  const { path: tempUpload, originalname } = req.file;
+
+  const avatarImg = await Jimp.read(tempUpload);
+  await avatarImg.cover(250, 250).writeAsync(tempUpload);
+
+  const filename = `${_id}_${originalname}`;
+
+  const resultUpload = path.join(avatarDir, filename);
+  await fs.rename(tempUpload, resultUpload);
+
+  const avatarUrl = path.join("avatars", filename);
+  await UserModel.findByIdAndUpdate(_id, { avatarUrl });
+
+  res.json({
+    avatarUrl,
+  });
+};
+
 module.exports = {
   signup,
   login,
   logout,
   current,
+  updateAvatar,
 };
