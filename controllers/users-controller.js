@@ -13,7 +13,7 @@ const signup = async (req, res) => {
   const user = await UserModel.findOne({ email });
   if (user) {
     res.status(409).json({
-      message: "Email alredy in use",
+      message: "Email already in use",
     });
     return;
   }
@@ -105,11 +105,11 @@ const updateAvatar = async (req, res) => {
   const resultUpload = path.join(avatarDir, filename);
   await fs.rename(tempUpload, resultUpload);
 
-  const avatarUrl = path.join("avatars", filename);
-  await UserModel.findByIdAndUpdate(_id, { avatarUrl });
+  const avatarURL = path.join("avatars", filename);
+  await UserModel.findByIdAndUpdate(_id, { avatarURL });
 
   res.json({
-    avatarUrl,
+    avatarURL,
   });
 };
 
